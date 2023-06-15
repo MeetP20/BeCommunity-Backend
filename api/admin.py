@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User
+from .models import User, Category, Community
 from django.db import models
 from django.contrib.auth.admin import  UserAdmin
 from django.forms import Textarea, TextInput, CharField
@@ -27,3 +27,5 @@ class UserAdminConfig(UserAdmin):
     )
 
 admin.site.register(User, UserAdminConfig)
+admin.site.register(Category)
+admin.site.register(Community)

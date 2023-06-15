@@ -40,3 +40,23 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email','name']
+
+
+class Category(models.Model):
+    name = models.CharField(max_length=50,blank=False,null=False)
+
+    def __str__(self):
+        return self.name
+
+class Community(models.Model):
+    name = models.CharField(max_length=50, blank=False, null=False)
+    description = models.CharField(max_length=254, blank=True, null=True)
+    image = models.ImageField(upload_to='community', blank=True)
+    admin = models.ForeignKey(User, null=False, on_delete=models.CASCADE,blank=False,related_name='creator')
+    membors = models.ManyToManyField(User, blank=False)
+    category = models.ManyToManyField(Category, blank=False)
+
+    def __str__(self):
+        return self.name
+
+
