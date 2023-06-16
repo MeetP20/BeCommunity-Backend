@@ -4,14 +4,14 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
-from .serializers import Signup
+from .serializers import Signup, GetCommunitySerializer
 from rest_framework.views import APIView
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from .models import User
+from .models import User, Community, Category
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
 User = get_user_model()
@@ -59,3 +59,22 @@ def get_user(request):
     user_id = decoded_token.payload.get('id') 
     user = User.objects.get(id=user_id)
     return Response(user.username, status=status.HTTP_302_FOUND)
+
+
+class getCommunity(APIView):
+    permission_classes = ([])
+    authentication_classes = ([])
+
+    def post(self, request):
+        data = request.data
+        l = {}
+        for i in data:
+            temp = Community.objects.filter(category=i)
+            object_list = []
+            for o in temp:
+                serializer = GetCommunitySerializer(data=o)
+                if serializer.is_valid():
+                    object_list.append(serializer.data)
+                
+            l[i] = object_list
+        print(l)

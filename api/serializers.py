@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.response import Response
-from .models import User
+from .models import User, Community
 from rest_framework import status
 class Login(serializers.ModelSerializer):
     class Meta:
@@ -23,3 +23,8 @@ class Signup(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
+
+class GetCommunitySerializer(serializers.Serializer):
+    class Meta:
+        model: Community
+        fields = ['name','image', 'description', 'Category']
