@@ -61,20 +61,26 @@ def get_user(request):
     return Response(user.username, status=status.HTTP_302_FOUND)
 
 
-class getCommunity(APIView):
-    permission_classes = ([])
-    authentication_classes = ([])
-
-    def post(self, request):
-        data = request.data
-        l = {}
-        for i in data:
-            temp = Community.objects.filter(category=i)
-            object_list = []
-            for o in temp:
-                serializer = GetCommunitySerializer(data=o)
-                if serializer.is_valid():
-                    object_list.append(serializer.data)
-                
-            l[i] = object_list
-        print(l)
+@api_view(['POST'])
+@permission_classes([])
+@authentication_classes([])
+def get_community(request):
+    print(request)
+    print("--------------------------------------------")
+    data = request.data['data']
+    print(data)
+    l = {}
+    for i in data:
+        c = Category.objects.get(name=i)
+        temp = Community.objects.filter(category=c.id)
+        object_list = []
+        t = []
+        for o in temp:
+            t.append(o)
+        serializer = GetCommunitySerializer(data=t, many=True)
+        serializer.is_valid()
+        serialized_data = serializer.data
+        l[i] = serialized_data
+        
+    print(l)
+    return Response(l)
