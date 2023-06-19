@@ -13,6 +13,7 @@ urlpatterns = [
     path('get_user/',views.get_user,name="get-user"),
     path('get_community/',views.get_community,name='get_community'),
     path('join/',views.joinCommunity,name='join-community'),
-    path('create-community/',views.createCommunity,name='create-community')
+    path('create-community/',views.createCommunity,name='create-community'),
+    path('get-categories/',views.getCategories, name="get-categories")
 ]
 

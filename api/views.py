@@ -4,7 +4,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
-from .serializers import Signup, GetCommunitySerializer
+from .serializers import Signup, GetCommunitySerializer, GetCategories
 from rest_framework.views import APIView
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.response import Response
@@ -122,3 +122,15 @@ def createCommunity(request):
         community.category.add(current_category[0].id)
     return Response(status=status.HTTP_201_CREATED)
 
+
+@api_view(['GET'])
+@permission_classes([])
+@authentication_classes([])
+def getCategories(request):
+    try:
+        category_queryset = Category.objects.all()
+        serializer = GetCategories(data=category_queryset, many=True)
+        serializer.is_valid()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response(status=status.HTTP_204_NO_CONTENT)

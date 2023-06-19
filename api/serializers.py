@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.response import Response
-from .models import User, Community
+from .models import User, Community, Category
 from rest_framework import status
 class Login(serializers.ModelSerializer):
     class Meta:
@@ -30,3 +30,9 @@ class GetCommunitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Community
         fields = ['id','name', 'description','creator', 'image']
+
+
+class GetCategories(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['name']
