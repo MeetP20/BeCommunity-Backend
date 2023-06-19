@@ -24,7 +24,9 @@ class Signup(serializers.ModelSerializer):
         user.save()
         return user
 
-class GetCommunitySerializer(serializers.Serializer):
+class GetCommunitySerializer(serializers.ModelSerializer):
+    creator = serializers.PrimaryKeyRelatedField(source='creator.username', read_only=True)
+    image = serializers.ImageField(required=False)
     class Meta:
-        model: Community
-        fields = ['name','image', 'description', 'Category']
+        model = Community
+        fields = ['id','name', 'description','creator', 'image']

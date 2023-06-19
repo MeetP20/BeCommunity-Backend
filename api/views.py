@@ -61,20 +61,64 @@ def get_user(request):
     return Response(user.username, status=status.HTTP_302_FOUND)
 
 
-class getCommunity(APIView):
-    permission_classes = ([])
-    authentication_classes = ([])
+@api_view(['POST'])
+@permission_classes([])
+@authentication_classes([])
+def get_community(request):
+    data = request.data['data']
+    l = {}
+    for i in data:
+        c = Category.objects.get(name=i)
+        temp = Community.objects.filter(category=c.id)
+        object_list = []
+        t = []
+        for o in temp:
+            t.append(o)
+        serializer = GetCommunitySerializer(data=t, many=True)
+        serializer.is_valid()
+        serialized_data = serializer.data
+        l[i] = serialized_data
+        
+    return Response(l)
 
-    def post(self, request):
-        data = request.data
-        l = {}
-        for i in data:
-            temp = Community.objects.filter(category=i)
-            object_list = []
-            for o in temp:
-                serializer = GetCommunitySerializer(data=o)
-                if serializer.is_valid():
-                    object_list.append(serializer.data)
-                
-            l[i] = object_list
-        print(l)
+@api_view(['POST'])
+@permission_classes([])
+@authentication_classes([])
+def joinCommunity(request):
+    community_id = request.data['id']
+    print(community_id)
+    token = request.headers.get('Authorization').split()[1]
+    decoded_token = RefreshToken(token)
+    user_id = decoded_token.payload.get('id')
+    community = Community.objects.get(id=community_id)
+    print(community.membors.all())
+    if community.membors.filter(id=user_id).exists():
+        print("hello")
+        return Response({'status':status.HTTP_403_FORBIDDEN})
+    community.membors.add(user_id)
+    community.save()
+    print(community.membors.all())
+
+    return Response({'status':status.HTTP_201_CREATED})
+
+
+@api_view(['POST'])
+@permission_classes([])
+@authentication_classes([])
+def createCommunity(request):
+    # token = request.headers.get('Authorization').split()[1]
+    # decoded_token = RefreshToken(token)
+    # user_id = decoded_token.payload.get('id')
+    data = request.data
+    name = data['name']
+    description = data['description']
+    creator = data['creator']
+    category_list = data['category']
+    user = User.objects.get(id=creator)
+    community = Community.objects.create(name=name, description=description,creator=user)
+    community.save()
+    for category in category_list:
+        current_category = Category.objects.get_or_create(name=category)
+        community.category.add(current_category[0].id)
+    return Response(status=status.HTTP_201_CREATED)
+
