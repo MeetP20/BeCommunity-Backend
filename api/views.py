@@ -65,10 +65,7 @@ def get_user(request):
 @permission_classes([])
 @authentication_classes([])
 def get_community(request):
-    print(request)
-    print("--------------------------------------------")
     data = request.data['data']
-    print(data)
     l = {}
     for i in data:
         c = Category.objects.get(name=i)
@@ -82,5 +79,46 @@ def get_community(request):
         serialized_data = serializer.data
         l[i] = serialized_data
         
-    print(l)
     return Response(l)
+
+@api_view(['POST'])
+@permission_classes([])
+@authentication_classes([])
+def joinCommunity(request):
+    community_id = request.data['id']
+    print(community_id)
+    token = request.headers.get('Authorization').split()[1]
+    decoded_token = RefreshToken(token)
+    user_id = decoded_token.payload.get('id')
+    community = Community.objects.get(id=community_id)
+    print(community.membors.all())
+    if community.membors.filter(id=user_id).exists():
+        print("hello")
+        return Response({'status':status.HTTP_403_FORBIDDEN})
+    community.membors.add(user_id)
+    community.save()
+    print(community.membors.all())
+
+    return Response({'status':status.HTTP_201_CREATED})
+
+
+@api_view(['POST'])
+@permission_classes([])
+@authentication_classes([])
+def createCommunity(request):
+    # token = request.headers.get('Authorization').split()[1]
+    # decoded_token = RefreshToken(token)
+    # user_id = decoded_token.payload.get('id')
+    data = request.data
+    name = data['name']
+    description = data['description']
+    creator = data['creator']
+    category_list = data['category']
+    user = User.objects.get(id=creator)
+    community = Community.objects.create(name=name, description=description,creator=user)
+    community.save()
+    for category in category_list:
+        current_category = Category.objects.get_or_create(name=category)
+        community.category.add(current_category[0].id)
+    return Response(status=status.HTTP_201_CREATED)
+

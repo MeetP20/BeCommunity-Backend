@@ -59,4 +59,15 @@ class Community(models.Model):
     def __str__(self):
         return self.name
 
+class Post(models.Model):
+    title = models.CharField(max_length=254, blank=False, null=False)
+    description = models.TextField(null=True, blank=True)
+    image = models.ImageField(upload_to="Post", blank=True)
+    likes = models.BigIntegerField(default=0)
+    post_creator = models.ForeignKey(User,on_delete=models.CASCADE,related_name="post_creator")
+    community = models.ForeignKey(Community, on_delete=models.CASCADE, related_name="community")
+    date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
 
