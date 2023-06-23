@@ -115,8 +115,9 @@ def createCommunity(request):
     description = data['description']
     creator = user_id
     category_list = data['category']
+    image = data['image']
     user = User.objects.get(id=creator)
-    community = Community.objects.create(name=name, description=description,creator=user)
+    community = Community.objects.create(name=name, description=description,creator=user,image=image)
     community.save()
     for category in category_list:
         current_category = Category.objects.get_or_create(name=category)
