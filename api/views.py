@@ -107,13 +107,13 @@ def joinCommunity(request):
 @permission_classes([])
 @authentication_classes([])
 def createCommunity(request):
-    # token = request.headers.get('Authorization').split()[1]
-    # decoded_token = RefreshToken(token)
-    # user_id = decoded_token.payload.get('id')
+    token = request.headers.get('Authorization').split()[1]
+    decoded_token = RefreshToken(token)
+    user_id = decoded_token.payload.get('id')
     data = request.data
     name = data['name']
     description = data['description']
-    creator = data['creator']
+    creator = user_id
     category_list = data['category']
     user = User.objects.get(id=creator)
     community = Community.objects.create(name=name, description=description,creator=user)
@@ -140,13 +140,12 @@ def getCategories(request):
 @permission_classes([])
 @authentication_classes([])
 def community_post(request):
-    # token = request.headers.get('Authorization').split()[1]
-    # decoded_token = RefreshToken(token)
-    # user_id = decoded_token.payload.get('id')
+    token = request.headers.get('Authorization').split()[1]
+    decoded_token = RefreshToken(token)
+    user_id = decoded_token.payload.get('id')
     data = request.data
     title = data['title']
     description = data['description']
-    user_id = data['id']
     community_name = data['community_name']
     user = User.objects.get(id=user_id)
     community = Community.objects.get(name=community_name)
