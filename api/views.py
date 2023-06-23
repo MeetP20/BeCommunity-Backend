@@ -4,7 +4,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
-from .serializers import Signup, GetCommunitySerializer, GetCategories, PostSerializer
+from .serializers import Signup, GetCommunitySerializer, GetCategories, PostSerializer, GetPostSerializer
 from rest_framework.views import APIView
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.response import Response
@@ -15,6 +15,8 @@ from .models import User, Community, Category, Post
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from datetime import date
 import datetime
+from django.utils import timezone
+from datetime import timedelta
 User = get_user_model()
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -107,20 +109,24 @@ def joinCommunity(request):
 @permission_classes([])
 @authentication_classes([])
 def createCommunity(request):
-    token = request.headers.get('Authorization').split()[1]
-    decoded_token = RefreshToken(token)
-    user_id = decoded_token.payload.get('id')
+    # token = request.headers.get('Authorization').split()[1]
+    # decoded_token = RefreshToken(token)
+    # user_id = decoded_token.payload.get('id')
     data = request.data
+    user_id = data['creator']
     name = data['name']
     description = data['description']
     creator = user_id
-    category_list = data['category']
+    # category_list = data['category']
+    category_list = request.POST.getlist('category')
+    print(category_list)
     image = data['image']
     user = User.objects.get(id=creator)
     community = Community.objects.create(name=name, description=description,creator=user,image=image)
     community.save()
     for category in category_list:
         current_category = Category.objects.get_or_create(name=category)
+        print(current_category)
         community.category.add(current_category[0].id)
     return Response(status=status.HTTP_201_CREATED)
 
@@ -141,10 +147,11 @@ def getCategories(request):
 @permission_classes([])
 @authentication_classes([])
 def community_post(request):
-    token = request.headers.get('Authorization').split()[1]
-    decoded_token = RefreshToken(token)
-    user_id = decoded_token.payload.get('id')
+    # token = request.headers.get('Authorization').split()[1]
+    # decoded_token = RefreshToken(token)
+    # user_id = decoded_token.payload.get('id')
     data = request.data
+    user_id = data['id']
     title = data['title']
     description = data['description']
     community_name = data['community_name']
@@ -167,14 +174,22 @@ def community_post(request):
 @permission_classes([])
 @authentication_classes([])
 def getPost(request):
-    id=4
-    communites_set = Community.objects.filter(membors=id)
-    print(communites_set)
-    new_post = []
-    for i in communites_set:
-        post = Post.objects.filter(community=i.id)
-        post = post.filter(date__gte=datetime.date.today()).order_by('-creation_time')
-        new_post.append(post)
-    
-    print(new_post)
-    return Response(status=status.HTTP_200_OK)
+    try:
+        id=4
+        communites_set = Community.objects.filter(membors=id)
+        print(communites_set)
+        new_post = []
+        one_hour_ago = timezone.now() - timedelta(hours=1)
+        for i in communites_set:
+            post = Post.objects.filter(community=i.id)
+            post = post.filter(date__gte=one_hour_ago).order_by('-date')
+            new_post.extend(post)
+        
+        new_post.sort(key=lambda post:post.date, reverse=True)
+        print(new_post)
+        seraializer = GetPostSerializer(data=new_post, many=True)
+        seraializer.is_valid()
+        return Response(seraializer.data,status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
