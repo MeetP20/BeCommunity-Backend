@@ -4,16 +4,17 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
-from .serializers import Signup, GetCommunitySerializer, GetCategories
+from .serializers import Signup, GetCommunitySerializer, GetCategories, PostSerializer
 from rest_framework.views import APIView
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from .models import User, Community, Category
+from .models import User, Community, Category, Post
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
-
+from datetime import date
+import datetime
 User = get_user_model()
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -134,3 +135,46 @@ def getCategories(request):
         return Response(serializer.data, status=status.HTTP_200_OK)
     except Exception as e:
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+@api_view(['POST'])
+@permission_classes([])
+@authentication_classes([])
+def community_post(request):
+    # token = request.headers.get('Authorization').split()[1]
+    # decoded_token = RefreshToken(token)
+    # user_id = decoded_token.payload.get('id')
+    data = request.data
+    title = data['title']
+    description = data['description']
+    user_id = data['id']
+    community_name = data['community_name']
+    user = User.objects.get(id=user_id)
+    community = Community.objects.get(name=community_name)
+    context = {
+        "title":title,
+        "description":description,
+        "post_creator":user.id,
+        "community":community.id
+    }
+    serializer = PostSerializer(data=context)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([])
+@authentication_classes([])
+def getPost(request):
+    id=4
+    communites_set = Community.objects.filter(membors=id)
+    print(communites_set)
+    new_post = []
+    for i in communites_set:
+        post = Post.objects.filter(community=i.id)
+        post = post.filter(date__gte=datetime.date.today()).order_by('-creation_time')
+        new_post.append(post)
+    
+    print(new_post)
+    return Response(status=status.HTTP_200_OK)

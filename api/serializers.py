@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.response import Response
-from .models import User, Community, Category
+from .models import User, Community, Category, Post
 from rest_framework import status
 class Login(serializers.ModelSerializer):
     class Meta:
@@ -36,3 +36,25 @@ class GetCategories(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['name']
+
+class PostSerializer(serializers.ModelSerializer):
+    # post_creator = serializers.PrimaryKeyRelatedField(source='post_creater.username', read_only=True)
+    # community = serializers.PrimaryKeyRelatedField(source='community.name', read_only=True)
+    class Meta:
+        model=Post
+        fields = ['title', 'description', 'post_creator', 'community']
+    
+    def create(self, validated_data):
+        post = Post(
+            title=validated_data['title'],
+            description=validated_data['description'],
+            post_creator=validated_data['post_creator'],
+            community=validated_data['community']
+        )
+        post.save()
+        return post
+
+class GetPostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Post
+        fields = ['title', 'description', 'post_creator', 'community']
