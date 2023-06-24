@@ -40,12 +40,13 @@ class GetCategories(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     # post_creator = serializers.PrimaryKeyRelatedField(source='post_creater.username', read_only=True)
     # community = serializers.PrimaryKeyRelatedField(source='community.name', read_only=True)
+    image = serializers.ImageField(required=False, allow_null=True)
     class Meta:
         model=Post
         fields = ['title', 'description', 'post_creator', 'community', 'image']
     
     def create(self, validated_data):
-        if validated_data['image'] is not None:
+        if validated_data.get('image') is not None:
             post = Post(
                 title=validated_data['title'],
                 description=validated_data['description'],

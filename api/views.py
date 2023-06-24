@@ -155,7 +155,11 @@ def community_post(request):
     title = data['title']
     description = data['description']
     community_name = data['community_name']
-    image = data['image']
+    if data.get('image') is not None:
+        image = data['image']
+    else:
+        image = None
+    print(image)
     user = User.objects.get(id=user_id)
     community = Community.objects.get(name=community_name)
     if image is not None:
