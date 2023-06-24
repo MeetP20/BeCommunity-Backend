@@ -42,14 +42,15 @@ class PostSerializer(serializers.ModelSerializer):
     # community = serializers.PrimaryKeyRelatedField(source='community.name', read_only=True)
     class Meta:
         model=Post
-        fields = ['title', 'description', 'post_creator', 'community']
+        fields = ['title', 'description', 'post_creator', 'community', 'image']
     
     def create(self, validated_data):
         post = Post(
             title=validated_data['title'],
             description=validated_data['description'],
             post_creator=validated_data['post_creator'],
-            community=validated_data['community']
+            community=validated_data['community'],
+            image=validated_data['image']
         )
         post.save()
         return post
