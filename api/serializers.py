@@ -65,6 +65,8 @@ class PostSerializer(serializers.ModelSerializer):
         return post
 
 class GetPostSerializer(serializers.ModelSerializer):
+    community = serializers.PrimaryKeyRelatedField(source="community.name", read_only=True)
+    post_creator = serializers.PrimaryKeyRelatedField(source="post_creator.username", read_only=True)
     class Meta:
         model=Post
-        fields = ['title', 'description', 'post_creator', 'community']
+        fields = ['title', 'description', 'post_creator', 'community', 'image']

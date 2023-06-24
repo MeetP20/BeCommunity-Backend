@@ -190,7 +190,7 @@ def community_post(request):
 @authentication_classes([])
 def getPost(request):
     try:
-        id=4
+        id=8
         communites_set = Community.objects.filter(membors=id)
         print(communites_set)
         new_post = []
@@ -206,5 +206,5 @@ def getPost(request):
         seraializer.is_valid()
         return Response(seraializer.data,status=status.HTTP_200_OK)
     except Exception as e:
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(seraializer.errors,status=status.HTTP_204_NO_CONTENT)
 
