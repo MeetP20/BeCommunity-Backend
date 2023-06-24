@@ -45,13 +45,21 @@ class PostSerializer(serializers.ModelSerializer):
         fields = ['title', 'description', 'post_creator', 'community', 'image']
     
     def create(self, validated_data):
-        post = Post(
-            title=validated_data['title'],
-            description=validated_data['description'],
-            post_creator=validated_data['post_creator'],
-            community=validated_data['community'],
-            image=validated_data['image']
-        )
+        if validated_data['image'] is not None:
+            post = Post(
+                title=validated_data['title'],
+                description=validated_data['description'],
+                post_creator=validated_data['post_creator'],
+                community=validated_data['community'],
+                image=validated_data['image']
+            )
+        else:
+            post = Post(
+                title=validated_data['title'],
+                description=validated_data['description'],
+                post_creator=validated_data['post_creator'],
+                community=validated_data['community'],
+            )
         post.save()
         return post
 

@@ -158,13 +158,22 @@ def community_post(request):
     image = data['image']
     user = User.objects.get(id=user_id)
     community = Community.objects.get(name=community_name)
-    context = {
-        "title":title,
-        "description":description,
-        "post_creator":user.id,
-        "community":community.id,
-        'image':image
-    }
+    if image is not None:
+        context = {
+            "title":title,
+            "description":description,
+            "post_creator":user.id,
+            "community":community.id,
+            'image':image
+        }
+    else:
+        context = {
+            "title":title,
+            "description":description,
+            "post_creator":user.id,
+            "community":community.id,
+        }
+    
     serializer = PostSerializer(data=context)
     if serializer.is_valid():
         serializer.save()
