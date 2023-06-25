@@ -16,6 +16,7 @@ urlpatterns = [
     path('create-community/',views.createCommunity,name='create-community'),
     path('get-categories/',views.getCategories, name="get-categories"),
     path('create-post/', views.community_post, name="create-post"),
-    path('get-post/',views.getPost, name="get-post")
+    path('get-post/',views.getPost, name="get-post"),
+    path('get_user_joined_community/', views.get_user_joined_communities, name="get-user-joined-community")
 ]
 

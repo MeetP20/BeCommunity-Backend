@@ -208,3 +208,23 @@ def getPost(request):
     except Exception as e:
         return Response(seraializer.errors,status=status.HTTP_204_NO_CONTENT)
 
+
+@api_view(['GET'])
+@permission_classes([])
+@authentication_classes([])
+def get_user_joined_communities(request):
+    try:
+        id = 8
+        community_set = Community.objects.filter(membors=id)
+        serializer = GetCommunitySerializer(data=community_set, many=True)
+        serializer.is_valid()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except:
+        return Response(serializer.errors, status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([])
+def get_top_post(request):
+    pass
