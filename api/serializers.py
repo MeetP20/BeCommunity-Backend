@@ -1,7 +1,9 @@
 from rest_framework import serializers
 from rest_framework.response import Response
-from .models import User, Community, Category, Post
+from .models import User, Community, Category, Post, EditProfile
 from rest_framework import status
+from django.core.files.base import ContentFile
+import base64
 class Login(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -70,3 +72,29 @@ class GetPostSerializer(serializers.ModelSerializer):
     class Meta:
         model=Post
         fields = ['title', 'description', 'post_creator', 'community', 'image']
+
+
+def validate_empty_string(value):
+    if value == '':
+        return None
+    return value
+
+class EditProfileSerializer(serializers.ModelSerializer):
+    recoveryEmail = serializers.EmailField(required=False, allow_null=True)
+    dob = serializers.DateField(required=False, allow_null=True)
+    image = serializers.ImageField(required=False, allow_null=True)
+
+    class Meta:
+        model=EditProfile
+        fields = ['user', 'recoveryEmail', 'bio', 'image', 'dob']
+    
+    def create(self, validated_data):
+        image_data = validated_data.pop('image', None)
+        if image_data:
+            validated_data['image'] = base64.b64encode(image_data.read())  
+            
+        user = validated_data.pop('user')
+        edit_obj = EditProfile.objects.create(user=user, **validated_data)
+        edit_obj.save()
+        return edit_obj
+    

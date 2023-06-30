@@ -71,3 +71,13 @@ class Post(models.Model):
     def __str__(self):
         return self.title
 
+class EditProfile(models.Model):
+    user = models.ForeignKey(User, models.CASCADE)
+    recoveryEmail = models.EmailField(max_length=255, unique=False)
+    image = models.BinaryField(blank=True)
+    dob = models.DateField(null=True, blank=True)
+    bio = models.TextField(blank=True, null=True)
+
+
+# class Comments(models.Model):
+#     pass

@@ -4,7 +4,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
-from .serializers import Signup, GetCommunitySerializer, GetCategories, PostSerializer, GetPostSerializer
+from .serializers import Signup, GetCommunitySerializer, GetCategories, PostSerializer, GetPostSerializer, EditProfileSerializer
 from rest_framework.views import APIView
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.response import Response
@@ -14,8 +14,10 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import User, Community, Category, Post
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from datetime import date
+import base64
 import datetime
 from django.utils import timezone
+import json
 from datetime import timedelta
 User = get_user_model()
 
@@ -109,18 +111,20 @@ def joinCommunity(request):
 @permission_classes([])
 @authentication_classes([])
 def createCommunity(request):
-    # token = request.headers.get('Authorization').split()[1]
-    # decoded_token = RefreshToken(token)
-    # user_id = decoded_token.payload.get('id')
+    token = request.headers.get('Authorization').split()[1]
+    decoded_token = RefreshToken(token)
+    user_id = decoded_token.payload.get('id')
     data = request.data
-    user_id = data['creator']
+    # user_id = data['creator']
+    # data = json.loads(data)
     name = data['name']
     description = data['description']
     creator = user_id
-    # category_list = data['category']
-    category_list = request.POST.getlist('category')
+    category_temp_list = data['community-category']
+    # category_temp_list = request.POST.getlist('community-category')
+    category_list = json.loads(category_temp_list)
     print(category_list)
-    image = data['image']
+    image = data['image-url']
     user = User.objects.get(id=creator)
     community = Community.objects.create(name=name, description=description,creator=user,image=image)
     community.save()
@@ -228,3 +232,17 @@ def get_user_joined_communities(request):
 @permission_classes([])
 def get_top_post(request):
     pass
+
+
+@api_view(['POST'])
+@authentication_classes([])
+@permission_classes([])
+def edit_profile(request):
+    data = request.data
+    
+    serializer = EditProfileSerializer(data=data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
