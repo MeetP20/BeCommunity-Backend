@@ -92,9 +92,14 @@ class EditProfileSerializer(serializers.ModelSerializer):
         image_data = validated_data.pop('image', None)
         if image_data:
             validated_data['image'] = base64.b64encode(image_data.read())  
-            
         user = validated_data.pop('user')
         edit_obj = EditProfile.objects.create(user=user, **validated_data)
         edit_obj.save()
         return edit_obj
     
+
+class GetProfileSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model=EditProfile
+        fields = ['user', 'recoveryEmail', 'bio', 'image', 'dob']

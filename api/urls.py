@@ -18,6 +18,7 @@ urlpatterns = [
     path('create-post/', views.community_post, name="create-post"),
     path('get-post/',views.getPost, name="get-post"),
     path('get_user_joined_community/', views.get_user_joined_communities, name="get-user-joined-community"),
-    path('edit_profile/',views.edit_profile,name="edit_profile")
+    path('edit_profile/',views.edit_profile,name="edit_profile"),
+    path('get_user_profile/',views.get_edit_profile_data,name="get_user_profile")
 ]
 

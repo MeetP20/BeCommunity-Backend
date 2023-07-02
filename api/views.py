@@ -4,14 +4,14 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
-from .serializers import Signup, GetCommunitySerializer, GetCategories, PostSerializer, GetPostSerializer, EditProfileSerializer
+from .serializers import Signup, GetCommunitySerializer, GetCategories, PostSerializer, GetPostSerializer, EditProfileSerializer, GetProfileSerializer
 from rest_framework.views import APIView
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from .models import User, Community, Category, Post
+from .models import User, Community, Category, Post, EditProfile
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from datetime import date
 import base64
@@ -19,6 +19,7 @@ import datetime
 from django.utils import timezone
 import json
 from datetime import timedelta
+from django.core.serializers import serialize
 User = get_user_model()
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -239,10 +240,46 @@ def get_top_post(request):
 @permission_classes([])
 def edit_profile(request):
     data = request.data
-    
     serializer = EditProfileSerializer(data=data)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['Get'])
+@permission_classes([])
+@authentication_classes([])
+def get_edit_profile_data(request):
+    # token = request.headers.get('Authorization').split()[1]
+    # decoded_token = RefreshToken(token)
+    # user_id = decoded_token.payload.get('id')
+    user_id = 8
+    profile_obj = EditProfile.objects.filter(user=user_id).first()
+    serialized_profile = serialize('json', [profile_obj])
+    profile_data = serialized_profile[1:-1]  # Remove square brackets from serialized data
+    image_data = profile_obj.image.tobytes()
+    image_data = base64.b64decode(image_data)
+    image_encoded = base64.b64encode(image_data).decode('utf-8')
+
+    context = {
+        "id": profile_obj.id,
+        "user_id": profile_obj.user_id,
+        "dob": profile_obj.dob,
+        "image": image_encoded,
+        "recoveryEmail": profile_obj.recoveryEmail,
+        "bio": profile_obj.bio
+    }
+    # profile_obj = profile_obj.__dict__
+    # print(profile_obj['image'][:20].tobytes())
+    # image = base64.b64decode(profile_obj['image'].tobytes()).decode('utf-8')
+    # context = {
+    #     "id":profile_obj['id'],
+    #     "user_id":profile_obj['user_id'],
+    #     "dob":profile_obj['dob'],
+    #     "image":image,
+    #     "recoveryEmail":profile_obj['recoveryEmail'],
+    #     "bio" : profile_obj['bio']
+    # }
+    # # print(context)
+    return Response(context)
