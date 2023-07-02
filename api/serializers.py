@@ -49,6 +49,9 @@ class PostSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         if validated_data.get('image') is not None:
+            image_data = validated_data.pop('image', None)
+            if image_data:
+                validated_data['image'] = base64.b64encode(image_data.read())
             post = Post(
                 title=validated_data['title'],
                 description=validated_data['description'],

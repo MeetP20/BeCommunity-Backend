@@ -126,8 +126,9 @@ def createCommunity(request):
     category_list = json.loads(category_temp_list)
     print(category_list)
     image = data['image-url']
+    image_data = base64.b64encode(image.read())
     user = User.objects.get(id=creator)
-    community = Community.objects.create(name=name, description=description,creator=user,image=image)
+    community = Community.objects.create(name=name, description=description,creator=user,image=image_data)
     community.save()
     for category in category_list:
         current_category = Category.objects.get_or_create(name=category)
@@ -152,11 +153,10 @@ def getCategories(request):
 @permission_classes([])
 @authentication_classes([])
 def community_post(request):
-    # token = request.headers.get('Authorization').split()[1]
-    # decoded_token = RefreshToken(token)
-    # user_id = decoded_token.payload.get('id')
+    token = request.headers.get('Authorization').split()[1]
+    decoded_token = RefreshToken(token)
+    user_id = decoded_token.payload.get('id')
     data = request.data
-    user_id = data['id']
     title = data['title']
     description = data['description']
     community_name = data['community_name']
@@ -240,6 +240,10 @@ def get_top_post(request):
 @permission_classes([])
 def edit_profile(request):
     data = request.data
+    token = request.headers.get('Authorization').split()[1]
+    decoded_token = RefreshToken(token)
+    user_id = decoded_token.payload.get('id')
+    data.update({'user':user_id})
     serializer = EditProfileSerializer(data=data)
     if serializer.is_valid():
         serializer.save()

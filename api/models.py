@@ -51,7 +51,7 @@ class Category(models.Model):
 class Community(models.Model):
     name = models.CharField(max_length=50, blank=False, null=False)
     description = models.CharField(max_length=254, blank=True, null=True)
-    image = models.ImageField(upload_to='community', blank=True)
+    image = models.BinaryField(blank=False)
     creator = models.ForeignKey(User, on_delete=models.CASCADE,related_name='creator')
     membors = models.ManyToManyField(User, blank=True)
     category = models.ManyToManyField(Category, blank=True)
@@ -62,7 +62,7 @@ class Community(models.Model):
 class Post(models.Model):
     title = models.CharField(max_length=254, blank=False, null=False)
     description = models.TextField(null=True, blank=True)
-    image = models.ImageField(upload_to="Post", blank=True)
+    image = models.BinaryField(blank=True)
     likes = models.BigIntegerField(default=0)
     post_creator = models.ForeignKey(User,on_delete=models.CASCADE,related_name="post_creator")
     community = models.ForeignKey(Community, on_delete=models.CASCADE, related_name="community")
