@@ -257,7 +257,7 @@ def get_edit_profile_data(request):
     user_id = 8
     profile_obj = EditProfile.objects.filter(user=user_id).first()
     serialized_profile = serialize('json', [profile_obj])
-    profile_data = serialized_profile[1:-1]  # Remove square brackets from serialized data
+    profile_data = serialized_profile[1:-1]
     image_data = profile_obj.image.tobytes()
     image_data = base64.b64decode(image_data)
     image_encoded = base64.b64encode(image_data).decode('utf-8')
