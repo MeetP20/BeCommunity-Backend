@@ -33,6 +33,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(max_length=254,unique=True)
     username = models.CharField(max_length=54, unique=True)
     name = models.CharField(max_length=54)
+    image = models.BinaryField(blank=True)
+    dob = models.DateField(null=True, blank=True)
+    bio = models.TextField(blank=True, null=True)
     is_staff = models.BooleanField(default=False)
     is_active=models.BooleanField(default=True)
 
@@ -63,7 +66,8 @@ class Post(models.Model):
     title = models.CharField(max_length=254, blank=False, null=False)
     description = models.TextField(null=True, blank=True)
     image = models.BinaryField(blank=True)
-    likes = models.BigIntegerField(default=0)
+    likes = models.BigIntegerField(default=1)
+    dislikes = models.BigIntegerField(default=0)
     post_creator = models.ForeignKey(User,on_delete=models.CASCADE,related_name="post_creator")
     community = models.ForeignKey(Community, on_delete=models.CASCADE, related_name="community")
     date = models.DateTimeField(auto_now_add=True)
@@ -71,13 +75,26 @@ class Post(models.Model):
     def __str__(self):
         return self.title
 
-class EditProfile(models.Model):
-    user = models.ForeignKey(User, models.CASCADE)
-    recoveryEmail = models.EmailField(max_length=255, unique=False)
-    image = models.BinaryField(blank=True)
-    dob = models.DateField(null=True, blank=True)
-    bio = models.TextField(blank=True, null=True)
+class Comments(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    content = models.TextField()
+    likes = models.BigIntegerField(default=1)
+    dislikes = models.BigIntegerField(default=0)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    date = models.DateTimeField(auto_now_add=True)
+    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name="replies")
 
 
-# class Comments(models.Model):
-#     pass
+    def __str__(self):
+        return str(self.author) + "comment" + str(self.content)
+
+    @property
+    def children(self):
+        return Comments.objects.filter(parent=self).reverse()
+    
+    @property
+    def is_parent(self):
+        if self.parent is None:
+            return True
+        
+        return False
