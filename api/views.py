@@ -4,7 +4,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
-from .serializers import Signup, GetCommunitySerializer, GetCategories, PostSerializer, GetPostSerializer, EditProfileSerializer, GetProfileSerializer
+from .serializers import Signup, GetCommunitySerializer, GetCategories, PostSerializer, GetPostSerializer, EditProfileSerializer, GetProfileSerializer, GetUserSerializer
 from rest_framework.views import APIView
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.response import Response
@@ -65,7 +65,9 @@ def get_user(request):
     decoded_token = RefreshToken(token)
     user_id = decoded_token.payload.get('id') 
     user = User.objects.get(id=user_id)
-    return Response(user.username, status=status.HTTP_302_FOUND)
+    serializer = GetUserSerializer(data=user)
+    serializer.is_valid()
+    return Response(serializer.data, status=status.HTTP_302_FOUND)
 
 
 @api_view(['POST'])
@@ -272,7 +274,7 @@ def get_edit_profile_data(request):
     image_encoded = base64.b64encode(image_data).decode('utf-8')
 
     context = {
-        "user_id": profile_obj.user_id,
+        "user_id": profile_obj.id,
         "username":profile_obj.username,
         "dob": profile_obj.dob,
         "image": image_encoded,
