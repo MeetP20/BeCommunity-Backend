@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.response import Response
-from .models import User, Community, Category, Post, EditProfile
+from .models import User, Community, Category, Post
 from rest_framework import status
 from django.core.files.base import ContentFile
 import base64
@@ -28,7 +28,15 @@ class Signup(serializers.ModelSerializer):
 
 class GetCommunitySerializer(serializers.ModelSerializer):
     creator = serializers.PrimaryKeyRelatedField(source='creator.username', read_only=True)
-    image = serializers.ImageField(required=False)
+    image = serializers.SerializerMethodField()
+    def get_image(self, community):
+        if community.image:
+            # Encode image data to base64 string
+            image_data = community.image.tobytes();
+            image_data = base64.b64decode(image_data)
+            image = base64.b64encode(image_data).decode('utf-8')
+            return image
+        return None
     class Meta:
         model = Community
         fields = ['id','name', 'description','creator', 'image']
@@ -49,6 +57,9 @@ class PostSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         if validated_data.get('image') is not None:
+            image_data = validated_data.pop('image', None)
+            if image_data:
+                validated_data['image'] = base64.b64encode(image_data.read())
             post = Post(
                 title=validated_data['title'],
                 description=validated_data['description'],
@@ -69,6 +80,15 @@ class PostSerializer(serializers.ModelSerializer):
 class GetPostSerializer(serializers.ModelSerializer):
     community = serializers.PrimaryKeyRelatedField(source="community.name", read_only=True)
     post_creator = serializers.PrimaryKeyRelatedField(source="post_creator.username", read_only=True)
+    image = serializers.SerializerMethodField()
+    def get_image(self, post):
+        if post.image:
+            # Encode image data to base64 string
+            image_data = post.image.tobytes()
+            image_data = base64.b64decode(image_data)
+            image = base64.b64encode(image_data).decode('utf-8')
+            return image
+        return None
     class Meta:
         model=Post
         fields = ['title', 'description', 'post_creator', 'community', 'image']
@@ -80,26 +100,38 @@ def validate_empty_string(value):
     return value
 
 class EditProfileSerializer(serializers.ModelSerializer):
-    recoveryEmail = serializers.EmailField(required=False, allow_null=True)
     dob = serializers.DateField(required=False, allow_null=True)
     image = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
-        model=EditProfile
-        fields = ['user', 'recoveryEmail', 'bio', 'image', 'dob']
-    
-    def create(self, validated_data):
+        model=User
+        fields = ['user', 'bio', 'image', 'dob']
+
+    def update(self, validated_data):
         image_data = validated_data.pop('image', None)
-        if image_data:
-            validated_data['image'] = base64.b64encode(image_data.read())  
-        user = validated_data.pop('user')
-        edit_obj = EditProfile.objects.create(user=user, **validated_data)
-        edit_obj.save()
-        return edit_obj
+        if image_data :
+            validated_data['image'] = base64.b64encode(image_data.read())
+        user_id = validated_data.pop('user')
+        user = User.objects.get(id=user_id)
+        user.bio = validated_data['bio']
+        user.image = validated_data['image']
+        user.dob = validated_data['dob']
+        user.save()
+        return user
+
+    
+    # def up(self, validated_data):
+    #     image_data = validated_data.pop('image', None)
+    #     if image_data:
+    #         validated_data['image'] = base64.b64encode(image_data.read())  
+    #     user = validated_data.pop('user')
+    #     edit_obj = EditProfile.objects.create(user=user, **validated_data)
+    #     edit_obj.save()
+    #     return edit_obj
     
 
 class GetProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model=EditProfile
+        model=User
         fields = ['user', 'recoveryEmail', 'bio', 'image', 'dob']

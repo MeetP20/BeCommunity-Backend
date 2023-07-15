@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from .models import User, Community, Category, Post, EditProfile
+from .models import User, Community, Category, Post
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from datetime import date
 import base64
@@ -126,9 +126,11 @@ def createCommunity(request):
     category_list = json.loads(category_temp_list)
     print(category_list)
     image = data['image-url']
+    image_data = base64.b64encode(image.read())
     user = User.objects.get(id=creator)
-    community = Community.objects.create(name=name, description=description,creator=user,image=image)
+    community = Community.objects.create(name=name, description=description,creator=user,image=image_data)
     community.save()
+    community.membors.add(user_id)
     for category in category_list:
         current_category = Category.objects.get_or_create(name=category)
         print(current_category)
@@ -152,16 +154,15 @@ def getCategories(request):
 @permission_classes([])
 @authentication_classes([])
 def community_post(request):
-    # token = request.headers.get('Authorization').split()[1]
-    # decoded_token = RefreshToken(token)
-    # user_id = decoded_token.payload.get('id')
+    token = request.headers.get('Authorization').split()[1]
+    decoded_token = RefreshToken(token)
+    user_id = decoded_token.payload.get('id')
     data = request.data
-    user_id = data['id']
     title = data['title']
     description = data['description']
-    community_name = data['community_name']
-    if data.get('image') is not None:
-        image = data['image']
+    community_name = data['community']
+    if data.get('image-url') is not None:
+        image = data['image-url']
     else:
         image = None
     print(image)
@@ -195,8 +196,10 @@ def community_post(request):
 @authentication_classes([])
 def getPost(request):
     try:
-        id=8
-        communites_set = Community.objects.filter(membors=id)
+        token = request.headers.get('Authorization').split()[1]
+        decoded_token = RefreshToken(token)
+        user_id = decoded_token.payload.get('id')
+        communites_set = Community.objects.filter(membors=user_id)
         print(communites_set)
         new_post = []
         one_hour_ago = timezone.now() - timedelta(hours=1)
@@ -207,11 +210,11 @@ def getPost(request):
         
         new_post.sort(key=lambda post:post.date, reverse=True)
         print(new_post)
-        seraializer = GetPostSerializer(data=new_post, many=True)
-        seraializer.is_valid()
-        return Response(seraializer.data,status=status.HTTP_200_OK)
+        serializer = GetPostSerializer(data=new_post, many=True)
+        serializer.is_valid()
+        return Response(serializer.data,status=status.HTTP_200_OK)
     except Exception as e:
-        return Response(seraializer.errors,status=status.HTTP_204_NO_CONTENT)
+        return Response(serializer.errors,status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(['GET'])
@@ -219,8 +222,10 @@ def getPost(request):
 @authentication_classes([])
 def get_user_joined_communities(request):
     try:
-        id = 8
-        community_set = Community.objects.filter(membors=id)
+        token = request.headers.get('Authorization').split()[1]
+        decoded_token = RefreshToken(token)
+        user_id = decoded_token.payload.get('id')
+        community_set = Community.objects.filter(membors=user_id)
         serializer = GetCommunitySerializer(data=community_set, many=True)
         serializer.is_valid()
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -240,6 +245,10 @@ def get_top_post(request):
 @permission_classes([])
 def edit_profile(request):
     data = request.data
+    token = request.headers.get('Authorization').split()[1]
+    decoded_token = RefreshToken(token)
+    user_id = decoded_token.payload.get('id')
+    data.update({'user':user_id})
     serializer = EditProfileSerializer(data=data)
     if serializer.is_valid():
         serializer.save()
@@ -255,7 +264,7 @@ def get_edit_profile_data(request):
     # decoded_token = RefreshToken(token)
     # user_id = decoded_token.payload.get('id')
     user_id = 8
-    profile_obj = EditProfile.objects.filter(user=user_id).first()
+    profile_obj = User.objects.filter(id=user_id).first()
     serialized_profile = serialize('json', [profile_obj])
     profile_data = serialized_profile[1:-1]
     image_data = profile_obj.image.tobytes()
@@ -283,3 +292,10 @@ def get_edit_profile_data(request):
     # }
     # # print(context)
     return Response(context)
+
+@api_view(['GET'])
+@permission_classes([])
+@authentication_classes([])
+def get_one_community_info(request, id):
+    community = Community.objects.get(id=id)
+    post = Post.objects.filter(community=community.ic)
