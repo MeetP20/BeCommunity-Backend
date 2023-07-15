@@ -32,7 +32,7 @@ class GetCommunitySerializer(serializers.ModelSerializer):
     membors = serializers.SerializerMethodField()
     def get_membors(self, instance):
         return instance.membors.count()
-        
+
     def get_image(self, community):
         if community.image:
             # Encode image data to base64 string
@@ -109,19 +109,19 @@ class EditProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model=User
-        fields = ['user', 'bio', 'image', 'dob']
+        fields = ['id', 'bio', 'image', 'dob']
 
-    def update(self, validated_data):
+    def update(self,instance, validated_data):
         image_data = validated_data.pop('image', None)
         if image_data :
-            validated_data['image'] = base64.b64encode(image_data.read())
-        user_id = validated_data.pop('user')
-        user = User.objects.get(id=user_id)
-        user.bio = validated_data['bio']
-        user.image = validated_data['image']
-        user.dob = validated_data['dob']
-        user.save()
-        return user
+            instance.image = base64.b64encode(image_data.read())
+        # user_id = validated_data.pop('user')
+        # user = User.objects.get(id=user_id)
+        instance.bio = validated_data['bio']
+        # user.image = validated_data['image']
+        instance.dob = validated_data['dob']
+        instance.save()
+        return instance
 
     
     # def up(self, validated_data):
