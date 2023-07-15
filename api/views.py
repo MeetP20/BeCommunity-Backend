@@ -261,10 +261,9 @@ def edit_profile(request):
 @permission_classes([])
 @authentication_classes([])
 def get_edit_profile_data(request):
-    # token = request.headers.get('Authorization').split()[1]
-    # decoded_token = RefreshToken(token)
-    # user_id = decoded_token.payload.get('id')
-    user_id = 8
+    token = request.headers.get('Authorization').split()[1]
+    decoded_token = RefreshToken(token)
+    user_id = decoded_token.payload.get('id')
     profile_obj = User.objects.filter(id=user_id).first()
     serialized_profile = serialize('json', [profile_obj])
     profile_data = serialized_profile[1:-1]
@@ -273,8 +272,8 @@ def get_edit_profile_data(request):
     image_encoded = base64.b64encode(image_data).decode('utf-8')
 
     context = {
-        "id": profile_obj.id,
         "user_id": profile_obj.user_id,
+        "username":profile_obj.username,
         "dob": profile_obj.dob,
         "image": image_encoded,
         "recoveryEmail": profile_obj.recoveryEmail,
