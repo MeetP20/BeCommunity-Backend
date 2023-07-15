@@ -29,6 +29,10 @@ class Signup(serializers.ModelSerializer):
 class GetCommunitySerializer(serializers.ModelSerializer):
     creator = serializers.PrimaryKeyRelatedField(source='creator.username', read_only=True)
     image = serializers.SerializerMethodField()
+    membors = serializers.SerializerMethodField()
+    def get_membors(self, instance):
+        return instance.membors.count()
+        
     def get_image(self, community):
         if community.image:
             # Encode image data to base64 string
@@ -39,7 +43,7 @@ class GetCommunitySerializer(serializers.ModelSerializer):
         return None
     class Meta:
         model = Community
-        fields = ['id','name', 'description','creator', 'image']
+        fields = ['id','name', 'description','creator', 'image', 'membors']
 
 
 class GetCategories(serializers.ModelSerializer):
@@ -91,7 +95,7 @@ class GetPostSerializer(serializers.ModelSerializer):
         return None
     class Meta:
         model=Post
-        fields = ['title', 'description', 'post_creator', 'community', 'image']
+        fields = ['id','title', 'description', 'post_creator', 'community', 'image','likes','dislikes', 'date']
 
 
 def validate_empty_string(value):

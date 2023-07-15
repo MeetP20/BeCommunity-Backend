@@ -14,6 +14,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import User, Community, Category, Post
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from datetime import date
+from django.forms.models import model_to_dict
 import base64
 import datetime
 from django.utils import timezone
@@ -298,4 +299,11 @@ def get_edit_profile_data(request):
 @authentication_classes([])
 def get_one_community_info(request, id):
     community = Community.objects.get(id=id)
-    post = Post.objects.filter(community=community.ic)
+    post = Post.objects.filter(community=community.id)
+    community_serializer = GetCommunitySerializer(community)
+    serializer = GetPostSerializer(post, many=True)    
+    context = {
+        "community":community_serializer.data,
+        "posts": serializer.data,
+    }
+    return Response(context, status=status.HTTP_200_OK)
