@@ -276,7 +276,6 @@ def get_edit_profile_data(request):
         "username":profile_obj.username,
         "dob": profile_obj.dob,
         "image": image_encoded,
-        "recoveryEmail": profile_obj.recoveryEmail,
         "bio": profile_obj.bio
     }
     # profile_obj = profile_obj.__dict__
