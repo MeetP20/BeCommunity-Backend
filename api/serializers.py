@@ -1,9 +1,11 @@
 from rest_framework import serializers
 from rest_framework.response import Response
-from .models import User, Community, Category, Post
+from .models import User, Community, Category, Post, Comments
 from rest_framework import status
 from django.core.files.base import ContentFile
+# from django.contrib.auth.models import User
 import base64
+
 class Login(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -26,11 +28,6 @@ class Signup(serializers.ModelSerializer):
         user.save()
         return user
 
-class GetUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ["username", "image"]
-
 class GetCommunitySerializer(serializers.ModelSerializer):
     creator = serializers.PrimaryKeyRelatedField(source='creator.username', read_only=True)
     image = serializers.SerializerMethodField()
@@ -41,7 +38,7 @@ class GetCommunitySerializer(serializers.ModelSerializer):
     def get_image(self, community):
         if community.image:
             # Encode image data to base64 string
-            image_data = community.image.tobytes();
+            image_data = community.image.tobytes()
             image_data = base64.b64decode(image_data)
             image = base64.b64encode(image_data).decode('utf-8')
             return image
@@ -144,3 +141,14 @@ class GetProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model=User
         fields = ['user', 'recoveryEmail', 'bio', 'image', 'dob']
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comments
+        fields = ["post", "content","author"]
+    
+    def create(self, validated_data):
+        comment = Comments.objects.create(**validated_data)
+        comment.save()
+        return comment

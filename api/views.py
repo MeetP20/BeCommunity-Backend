@@ -4,7 +4,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
-from .serializers import Signup, GetCommunitySerializer, GetCategories, PostSerializer, GetPostSerializer, EditProfileSerializer, GetProfileSerializer, GetUserSerializer
+from .serializers import Signup, GetCommunitySerializer, GetCategories, PostSerializer, GetPostSerializer, EditProfileSerializer, GetProfileSerializer, CommentSerializer
 from rest_framework.views import APIView
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.response import Response
@@ -57,17 +57,29 @@ class Register(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
-@permission_classes([])
-@authentication_classes([])
+@permission_classes([IsAuthenticatedOrReadOnly])
 def get_user(request):
     header = request.META.get('Authorization')
     token = request.headers.get('Authorization').split()[1]
     decoded_token = RefreshToken(token)
     user_id = decoded_token.payload.get('id') 
+
     user = User.objects.get(id=user_id)
-    serializer = GetUserSerializer(data=user)
-    serializer.is_valid()
-    return Response(serializer.data, status=status.HTTP_302_FOUND)
+    print(user.__dict__)
+    user = user.__dict__
+
+    image = user['image']
+    image = image.tobytes()
+    image_data = base64.b64decode(image)
+    image_data = base64.b64encode(image_data).decode('utf-8')
+    
+    context = {
+        "username":user["username"],
+        "image":image_data
+    }
+
+    
+    return Response(context)
 
 
 @api_view(['POST'])
@@ -307,3 +319,20 @@ def get_one_community_info(request, id):
         "posts": serializer.data,
     }
     return Response(context, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([])
+def makeComment(request, post_id):
+    data = request.data
+    token = request.headers.get('Authorization').split()[1]
+    decoded_token = RefreshToken(token)
+    user_id = decoded_token.payload.get('id')
+    data.update({"post":post_id, "author":user_id})
+    serializer = CommentSerializer(data = data)
+    if serializer.is_valid():
+        serializer.save()
+        print(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
