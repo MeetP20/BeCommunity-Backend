@@ -22,6 +22,6 @@ urlpatterns = [
     path('get_user_profile/',views.get_edit_profile_data,name="get_user_profile"),
     path('get_one_community_info/<str:id>/',views.get_one_community_info, name="get_one_community"),
     path('make_comment/<str:post_id>/', views.makeComment, name="make_comment"),
-    
+    path('like_post/<str:post_id>/', views.likePost, name="like_post"),
 ]
 

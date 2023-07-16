@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.response import Response
-from .models import User, Community, Category, Post, Comments
+from .models import User, Community, Category, Post, Comments, PostLikes, PostDislike
 from rest_framework import status
 from django.core.files.base import ContentFile
 # from django.contrib.auth.models import User
@@ -87,6 +87,42 @@ class GetPostSerializer(serializers.ModelSerializer):
     community = serializers.PrimaryKeyRelatedField(source="community.name", read_only=True)
     post_creator = serializers.PrimaryKeyRelatedField(source="post_creator.username", read_only=True)
     image = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
+    dislikes_count = serializers.SerializerMethodField()
+    has_liked = serializers.SerializerMethodField()
+    has_disliked = serializers.SerializerMethodField()
+
+    def get_likes_count(self, obj):
+        try:
+            like = PostLikes.objects.filter(post=obj)
+            return like.count()
+        except PostLikes.DoesNotExist:
+            return 0
+    
+    def get_has_liked(self, obj):
+        user_id = self.context.get("user_id")
+        
+        try:
+            like = PostLikes.objects.get(post=obj, user=user_id)
+            return True
+        except:
+            return False
+    
+    def get_dislikes_count(self, obj):
+        try:
+            dislike = PostDislike.objects.filter(post=obj)
+            return dislike.count()
+        except PostDislike.DoesNotExist:
+            return 0
+    
+    def get_has_disliked(self, obj):
+        user_id = self.context.get("user_id")
+        try:
+            dislike = PostDislike.objects.get(post=obj, user=user_id)
+            return True
+        except:
+            return False
+
     def get_image(self, post):
         if post.image:
             # Encode image data to base64 string
@@ -97,7 +133,7 @@ class GetPostSerializer(serializers.ModelSerializer):
         return None
     class Meta:
         model=Post
-        fields = ['id','title', 'description', 'post_creator', 'community', 'image','likes','dislikes', 'date']
+        fields = ['id','title', 'description', 'post_creator', 'community', 'image','likes_count','dislikes_count','has_liked','has_disliked', 'date',]
 
 
 def validate_empty_string(value):
@@ -152,3 +188,8 @@ class CommentSerializer(serializers.ModelSerializer):
         comment = Comments.objects.create(**validated_data)
         comment.save()
         return comment
+
+class PostLikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostLikes
+        fields = ["post", "user"]

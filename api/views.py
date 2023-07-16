@@ -4,14 +4,14 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
-from .serializers import Signup, GetCommunitySerializer, GetCategories, PostSerializer, GetPostSerializer, EditProfileSerializer, GetProfileSerializer, CommentSerializer
+from .serializers import Signup, GetCommunitySerializer, GetCategories, PostSerializer, GetPostSerializer, EditProfileSerializer, GetProfileSerializer, CommentSerializer, PostLikeSerializer
 from rest_framework.views import APIView
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from .models import User, Community, Category, Post
+from .models import User, Community, Category, Post, PostLikes, PostDislike, Comments
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from datetime import date
 from django.forms.models import model_to_dict
@@ -210,26 +210,26 @@ def community_post(request):
 @permission_classes([])
 @authentication_classes([])
 def getPost(request):
-    try:
-        token = request.headers.get('Authorization').split()[1]
-        decoded_token = RefreshToken(token)
-        user_id = decoded_token.payload.get('id')
-        communites_set = Community.objects.filter(membors=user_id)
-        print(communites_set)
-        new_post = []
-        one_hour_ago = timezone.now() - timedelta(hours=1)
-        for i in communites_set:
-            post = Post.objects.filter(community=i.id)
-            post = post.filter(date__gte=one_hour_ago).order_by('-date')
-            new_post.extend(post)
+    token = request.headers.get('Authorization').split()[1]
+    decoded_token = RefreshToken(token)
+    user_id = decoded_token.payload.get('id')
+    communites_set = Community.objects.filter(membors=user_id)
+    print(communites_set)
+    new_post = []
+    one_hour_ago = timezone.now() - timedelta(hours=1200)
+    for i in communites_set:
+        post = Post.objects.filter(community=i.id)
+        post = post.filter(date__gte=one_hour_ago).order_by('-date')
+        new_post.extend(post)
         
-        new_post.sort(key=lambda post:post.date, reverse=True)
-        print(new_post)
-        serializer = GetPostSerializer(data=new_post, many=True)
-        serializer.is_valid()
-        return Response(serializer.data,status=status.HTTP_200_OK)
-    except Exception as e:
-        return Response(serializer.errors,status=status.HTTP_204_NO_CONTENT)
+    new_post.sort(key=lambda post:post.date, reverse=True)
+    print(new_post)
+    serializer = GetPostSerializer(new_post, many=True, context={"user_id":user_id})
+    return Response(serializer.data,status=status.HTTP_200_OK)
+    # if serializer.is_valid():
+        
+    # else:
+    #     return Response(serializer.errors,status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(['GET'])
@@ -336,3 +336,17 @@ def makeComment(request, post_id):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     else:
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([])
+def likePost(request, post_id):
+    token = request.headers.get('Authorization').split()[1]
+    decoded_token = RefreshToken(token)
+    user_id = decoded_token.payload.get('id')
+    serializer = PostLikeSerializer(data={"post":post_id, "user":user_id})
+    if serializer.is_valid():
+        serializer.save()
+        return Response(status=status.HTTP_202_ACCEPTED)
+    else:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+

@@ -66,8 +66,6 @@ class Post(models.Model):
     title = models.CharField(max_length=254, blank=False, null=False)
     description = models.TextField(null=True, blank=True)
     image = models.BinaryField(blank=True)
-    likes = models.BigIntegerField(default=1)
-    dislikes = models.BigIntegerField(default=0)
     post_creator = models.ForeignKey(User,on_delete=models.CASCADE,related_name="post_creator")
     community = models.ForeignKey(Community, on_delete=models.CASCADE, related_name="community")
     date = models.DateTimeField(auto_now_add=True)
@@ -78,8 +76,6 @@ class Post(models.Model):
 class Comments(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     content = models.TextField()
-    likes = models.BigIntegerField(default=1)
-    dislikes = models.BigIntegerField(default=0)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
     parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name="replies")
@@ -98,3 +94,16 @@ class Comments(models.Model):
             return True
         
         return False
+
+
+class PostLikes(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+
+
+class PostDislike(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+
+
+
