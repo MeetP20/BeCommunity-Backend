@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.response import Response
-from .models import User, Community, Category, Post, Comments, PostLikes, PostDislike
+from .models import User, Community, Category, Post, Comments, PostLikes, PostDislike, CommentDislike, CommentLikes
 from rest_framework import status
 from django.core.files.base import ContentFile
 # from django.contrib.auth.models import User
@@ -193,3 +193,78 @@ class PostLikeSerializer(serializers.ModelSerializer):
     class Meta:
         model = PostLikes
         fields = ["post", "user"]
+
+class PostDislikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostDislike
+        fields = ["post", "user"]
+
+class GetCommentSerializer(serializers.ModelSerializer):
+    # post = serializers.PrimaryKeyRelatedField(source="post.id", read_only=True)
+    author = serializers.PrimaryKeyRelatedField(source="author.username", read_only=True)
+    likes_count = serializers.SerializerMethodField()
+    dislikes_count = serializers.SerializerMethodField()
+    has_liked = serializers.SerializerMethodField()
+    has_disliked = serializers.SerializerMethodField()
+    reply_counts = serializers.SerializerMethodField()
+    replies = serializers.SerializerMethodField()
+
+    def get_likes_count(self, obj):
+        try:
+            like = CommentLikes.objects.filter(comment=obj)
+            return like.count()
+        except CommentLikes.DoesNotExist:
+            return 0
+
+    def get_dislikes_count(self, obj):
+        try:
+            dislike = CommentDislike.objects.filter(comment=obj)
+            return dislike.count()
+        except CommentDislike.DoesNotExist:
+            return 0
+
+    def get_has_liked(self, obj):
+        user_id = self.context.get("user_id")
+        
+        try:
+            like = CommentLikes.objects.get(comment=obj, user=user_id)
+            return True
+        except:
+            return False
+    
+    def get_has_disliked(self, obj):
+        user_id = self.context.get("user_id")
+        try:
+            dislike = CommentDislike.objects.get(comment=obj, user=user_id)
+            return True
+        except:
+            return False
+    
+    def get_reply_counts(self, obj):
+        try:
+            reply = Comments.objects.filter(parent=obj)
+            return reply.count()
+        except:
+            return 0
+
+    def get_replies(self, obj):
+        try:
+            replies = Comments.objects.filter(parent=obj)
+            serializer = GetCommentSerializer(replies, many=True)
+            return serializer.data
+        except:
+            return []
+
+    class Meta:
+        model = Comments
+        fields = ["id","post", "content", "author", "date", "parent", "likes_count", "dislikes_count", "has_liked", "has_disliked", "reply_counts", "replies"]
+
+class ReplySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comments
+        fields = ["post", "author", "content", "parent"]
+
+    def create(self, validated_data):
+        comment = Comments.objects.create(**validated_data)
+        comment.save()
+        return comment

@@ -23,5 +23,8 @@ urlpatterns = [
     path('get_one_community_info/<str:id>/',views.get_one_community_info, name="get_one_community"),
     path('make_comment/<str:post_id>/', views.makeComment, name="make_comment"),
     path('like_post/<str:post_id>/', views.likePost, name="like_post"),
+    path('dislike_post/<str:post_id>/', views.dislikePost, name="dislike_post"),
+    path('get_comments/<str:post_id>/',views.get_comments, name="get_comments"),
+    path('make_reply/<str:post_id>/<str:comment_id>/',views.makeReply, name="make_reply"),
 ]
 

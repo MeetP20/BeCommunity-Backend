@@ -105,5 +105,13 @@ class PostDislike(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
 
+class CommentLikes(models.Model):
+    comment = models.ForeignKey(Comments,on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+class CommentDislike(models.Model):
+    comment = models.ForeignKey(Comments, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
 
 
