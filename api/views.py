@@ -391,3 +391,13 @@ def makeReply(request, post_id, comment_id):
     else:
         return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
+
+@api_view(['GET'])
+@permission_classes([])
+def get_one_post(request, post_id):
+    token = request.headers.get('Authorization').split()[1]
+    decoded_token = RefreshToken(token)
+    user_id = decoded_token.payload.get('id')
+    post = Post.objects.get(id=post_id)
+    serializer = GetPostSerializer(post, context={"user_id":user_id})
+    return Response(serializer.data, status=status.HTTP_200_OK)
