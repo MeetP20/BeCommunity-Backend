@@ -4,14 +4,14 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
-from .serializers import Signup, GetCommunitySerializer, GetCategories, PostSerializer, GetPostSerializer, EditProfileSerializer, GetProfileSerializer, CommentSerializer, PostLikeSerializer, PostDislikeSerializer, GetCommentSerializer, ReplySerializer
+from .serializers import Signup, GetCommunitySerializer, GetCategories, PostSerializer, GetPostSerializer, EditProfileSerializer, GetProfileSerializer, CommentSerializer, PostLikeSerializer, PostDislikeSerializer, GetCommentSerializer, ReplySerializer, CommentLikeSerializer, CommentDislikeSerilaizer
 from rest_framework.views import APIView
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from .models import User, Community, Category, Post, PostLikes, PostDislike, Comments
+from .models import User, Community, Category, Post, PostLikes, PostDislike, Comments, CommentLikes
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from datetime import date
 from django.forms.models import model_to_dict
@@ -106,19 +106,17 @@ def get_community(request):
 @permission_classes([])
 @authentication_classes([])
 def joinCommunity(request):
-    community_id = request.data['id']
-    print(community_id)
+    data = request.data['data']
     token = request.headers.get('Authorization').split()[1]
     decoded_token = RefreshToken(token)
     user_id = decoded_token.payload.get('id')
-    community = Community.objects.get(id=community_id)
-    print(community.membors.all())
-    if community.membors.filter(id=user_id).exists():
-        print("hello")
-        return Response({'status':status.HTTP_403_FORBIDDEN})
-    community.membors.add(user_id)
-    community.save()
-    print(community.membors.all())
+    for community_id in data:
+        community = Community.objects.get(id=community_id)
+        print(community.membors.all())
+        if community.membors.filter(id=user_id).exists():
+            return Response({'status':status.HTTP_403_FORBIDDEN})
+        community.membors.add(user_id)
+        community.save()
 
     return Response({'status':status.HTTP_201_CREATED})
 
@@ -292,18 +290,6 @@ def get_edit_profile_data(request):
         "image": image_encoded,
         "bio": profile_obj.bio
     }
-    # profile_obj = profile_obj.__dict__
-    # print(profile_obj['image'][:20].tobytes())
-    # image = base64.b64decode(profile_obj['image'].tobytes()).decode('utf-8')
-    # context = {
-    #     "id":profile_obj['id'],
-    #     "user_id":profile_obj['user_id'],
-    #     "dob":profile_obj['dob'],
-    #     "image":image,
-    #     "recoveryEmail":profile_obj['recoveryEmail'],
-    #     "bio" : profile_obj['bio']
-    # }
-    # # print(context)
     return Response(context)
 
 @api_view(['GET'])
@@ -357,6 +343,9 @@ def dislikePost(request, post_id):
     token = request.headers.get('Authorization').split()[1]
     decoded_token = RefreshToken(token)
     user_id = decoded_token.payload.get('id')
+    if PostLikes.objects.filter(post=post_id, user=user_id).exists():
+        like = PostLikes.objects.get(post=post_id, user=user_id)
+        like.delete()
     serializer = PostDislikeSerializer(data={"post":post_id, "user":user_id})
     if serializer.is_valid():
         serializer.save()
@@ -401,3 +390,33 @@ def get_one_post(request, post_id):
     post = Post.objects.get(id=post_id)
     serializer = GetPostSerializer(post, context={"user_id":user_id})
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([])
+def likeComments(request, comment_id):
+    token = request.headers.get('Authorization').split()[1]
+    decoded_token = RefreshToken(token)
+    user_id = decoded_token.payload.get('id')
+    serializer = CommentLikeSerializer(data={'comment':comment_id, 'user':user_id})
+    if serializer.is_valid():
+        serializer.save()
+        return Response(status=status.HTTP_202_ACCEPTED)
+    else:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([])
+def dislikeComment(request, comment_id):
+    token = request.headers.get('Authorization').split()[1]
+    decoded_token = RefreshToken(token)
+    user_id = decoded_token.payload.get('id')
+    if CommentLikes.objects.filter(comment=comment_id, user=user_id).exists():
+        like = CommentLikes.objects.get(comment=comment_id, user=user_id)
+        like.delete()
+    serializer = CommentDislikeSerilaizer(data={'comment':comment_id, 'user':user_id})
+    if serializer.is_valid():
+        serializer.save()
+        return Response(status=status.HTTP_202_ACCEPTED)
+    else:
+        return Response(status=status.HTTP_400_BAD_REQUEST)

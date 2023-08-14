@@ -268,3 +268,13 @@ class ReplySerializer(serializers.ModelSerializer):
         comment = Comments.objects.create(**validated_data)
         comment.save()
         return comment
+        
+class CommentLikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CommentLikes
+        fields = ["comment", "user"]
+
+class CommentDislikeSerilaizer(serializers.ModelSerializer):
+    class Meta:
+        model = CommentDislike
+        fields = ["comment", "user"]

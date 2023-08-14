@@ -113,5 +113,11 @@ class CommentDislike(models.Model):
     comment = models.ForeignKey(Comments, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
+class ChatRoomMessage(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    message = models.TextField()
+    community = models.ForeignKey(Community, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now_add=True)
 
-
+    def __str__(self):
+        return f'{self.user.username} message to {self.community.name}'

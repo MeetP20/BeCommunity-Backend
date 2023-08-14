@@ -33,6 +33,7 @@ AUTH_USER_MODEL = 'api.User'
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -126,7 +127,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "becommunity.wsgi.application"
-
+ASGI_APPLICATION = "becommunity.asgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
