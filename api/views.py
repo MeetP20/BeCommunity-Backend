@@ -4,7 +4,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
-from .serializers import Signup, GetCommunitySerializer, GetCategories, PostSerializer, GetPostSerializer, EditProfileSerializer, GetProfileSerializer, CommentSerializer, PostLikeSerializer, PostDislikeSerializer, GetCommentSerializer, ReplySerializer, CommentLikeSerializer, CommentDislikeSerilaizer
+from .serializers import Signup, GetCommunitySerializer, GetCategories, PostSerializer, GetPostSerializer, EditProfileSerializer, GetProfileSerializer, CommentSerializer, PostLikeSerializer, PostDislikeSerializer, GetCommentSerializer, ReplySerializer, CommentLikeSerializer, CommentDislikeSerilaizer, GetAllCommunitySerializer
 from rest_framework.views import APIView
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.response import Response
@@ -420,3 +420,12 @@ def dislikeComment(request, comment_id):
         return Response(status=status.HTTP_202_ACCEPTED)
     else:
         return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+@permission_classes([])
+@api_view(["GET"])
+def getAllCommunities(request):
+    community_set = Community.objects.all()
+    serializer = GetAllCommunitySerializer(community_set, many=True)
+    # serializer.is_valid()
+    return Response(serializer.data, status=status.HTTP_200_OK)

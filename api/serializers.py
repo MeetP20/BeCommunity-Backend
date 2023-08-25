@@ -278,3 +278,12 @@ class CommentDislikeSerilaizer(serializers.ModelSerializer):
     class Meta:
         model = CommentDislike
         fields = ["comment", "user"]
+
+class GetAllCommunitySerializer(serializers.ModelSerializer):
+    members = serializers.SerializerMethodField()
+
+    def get_members(self, instance):
+        return instance.membors.count()
+    class Meta:
+        model = Community
+        fields = ["id", "name", "members"]
