@@ -132,6 +132,8 @@ def createCommunity(request):
     # user_id = data['creator']
     # data = json.loads(data)
     name = data['name']
+    if Community.objects.filter(name=name).exists():
+        return Response({"message":"Community with this name already exist", "status":status.HTTP_226_IM_USED})
     description = data['description']
     creator = user_id
     category_temp_list = data['community-category']
