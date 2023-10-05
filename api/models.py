@@ -38,7 +38,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     bio = models.TextField(blank=True, null=True)
     is_staff = models.BooleanField(default=False)
     is_active=models.BooleanField(default=True)
-
+    is_onboard = models.BooleanField(default=False)
     objects = UserManager()
 
     USERNAME_FIELD = 'username'

@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from .models import User, Community, Category, Post, PostLikes, PostDislike, Comments, CommentLikes
+from .models import User, Community, Category, Post, PostLikes, PostDislike, Comments, CommentLikes, CommentDislike
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from datetime import date
 from django.forms.models import model_to_dict
@@ -72,10 +72,16 @@ def get_user(request):
     image = image.tobytes()
     image_data = base64.b64decode(image)
     image_data = base64.b64encode(image_data).decode('utf-8')
-    
+    user.pop('image')
+    user.pop('password')
     context = {
         "username":user["username"],
-        "image":image_data
+        "image":image_data,
+        "name":user["name"],
+        "bio":user["bio"],
+        "dob":user["dob"],
+        "id":user["id"],
+        "email":user["email"]
     }
 
     
@@ -110,6 +116,7 @@ def joinCommunity(request):
     token = request.headers.get('Authorization').split()[1]
     decoded_token = RefreshToken(token)
     user_id = decoded_token.payload.get('id')
+    user = User.objects.get(id=user_id)
     for community_id in data:
         community = Community.objects.get(id=community_id)
         print(community.membors.all())
@@ -117,6 +124,10 @@ def joinCommunity(request):
             return Response({'status':status.HTTP_403_FORBIDDEN})
         community.membors.add(user_id)
         community.save()
+        if not user.is_onboard:
+            user.is_onboard=True
+            user.save()
+        
 
     return Response({'status':status.HTTP_201_CREATED})
 
@@ -298,10 +309,13 @@ def get_edit_profile_data(request):
 @permission_classes([])
 @authentication_classes([])
 def get_one_community_info(request, id):
+    token = request.headers.get('Authorization').split()[1]
+    decoded_token = RefreshToken(token)
+    user_id = decoded_token.payload.get('id')
     community = Community.objects.get(id=id)
     post = Post.objects.filter(community=community.id)
     community_serializer = GetCommunitySerializer(community)
-    serializer = GetPostSerializer(post, many=True)    
+    serializer = GetPostSerializer(post, many=True, context={"user_id":user_id})    
     context = {
         "community":community_serializer.data,
         "posts": serializer.data,
@@ -331,6 +345,13 @@ def likePost(request, post_id):
     token = request.headers.get('Authorization').split()[1]
     decoded_token = RefreshToken(token)
     user_id = decoded_token.payload.get('id')
+    if PostLikes.objects.filter(post=post_id, user=user_id).exists():
+        like = PostLikes.objects.get(post=post_id, user=user_id)
+        like.delete()
+        return Response(status=status.HTTP_200_OK)
+    if PostDislike.objects.filter(post=post_id, user=user_id).exists():
+        dislike = PostDislike.objects.get(post=post_id, user=user_id)
+        dislike.delete()
     serializer = PostLikeSerializer(data={"post":post_id, "user":user_id})
     if serializer.is_valid():
         serializer.save()
@@ -345,6 +366,10 @@ def dislikePost(request, post_id):
     token = request.headers.get('Authorization').split()[1]
     decoded_token = RefreshToken(token)
     user_id = decoded_token.payload.get('id')
+    if PostDislike.objects.filter(post=post_id, user=user_id).exists():
+        dislike = PostDislike.objects.get(post=post_id, user=user_id)
+        dislike.delete()
+        return Response(status=status.HTTP_200_OK)
     if PostLikes.objects.filter(post=post_id, user=user_id).exists():
         like = PostLikes.objects.get(post=post_id, user=user_id)
         like.delete()
@@ -400,6 +425,13 @@ def likeComments(request, comment_id):
     token = request.headers.get('Authorization').split()[1]
     decoded_token = RefreshToken(token)
     user_id = decoded_token.payload.get('id')
+    if CommentLikes.objects.filter(comment=comment_id, user=user_id).exists():
+        like = CommentLikes.objects.get(comment=comment_id, user=user_id)
+        like.delete()
+        return Response(status=status.HTTP_200_OK)
+    if CommentDislike.objects.filter(comment=comment_id, user=user_id).exists():
+        dislike = CommentDislike.objects.get(comment=comment_id, user=user_id)
+        dislike.delete()
     serializer = CommentLikeSerializer(data={'comment':comment_id, 'user':user_id})
     if serializer.is_valid():
         serializer.save()
@@ -413,6 +445,10 @@ def dislikeComment(request, comment_id):
     token = request.headers.get('Authorization').split()[1]
     decoded_token = RefreshToken(token)
     user_id = decoded_token.payload.get('id')
+    if CommentDislike.objects.filter(comment=comment_id, user=user_id).exists():
+        dislike = CommentDislike.objects.get(comment=comment_id, user=user_id)
+        dislike.delete()
+        return Response(status=status.HTTP_200_OK)
     if CommentLikes.objects.filter(comment=comment_id, user=user_id).exists():
         like = CommentLikes.objects.get(comment=comment_id, user=user_id)
         like.delete()
@@ -429,5 +465,13 @@ def dislikeComment(request, comment_id):
 def getAllCommunities(request):
     community_set = Community.objects.all()
     serializer = GetAllCommunitySerializer(community_set, many=True)
-    # serializer.is_valid()
+    # serializer.is_valid()N
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+def getIsOnboard(request):
+    token = request.headers.get('Authorization').split()[1]
+    decoded_token = RefreshToken(token)
+    user_id = decoded_token.payload.get('id')
+    user = User.objects.get(id=user_id)
+    return Response(user.is_onboard, status=status.HTTP_200_OK)

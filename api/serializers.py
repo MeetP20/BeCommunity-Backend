@@ -101,12 +101,9 @@ class GetPostSerializer(serializers.ModelSerializer):
     
     def get_has_liked(self, obj):
         user_id = self.context.get("user_id")
-        
-        try:
-            like = PostLikes.objects.get(post=obj, user=user_id)
-            return True
-        except:
-            return False
+        print(user_id)
+        return PostLikes.objects.filter(post=obj.__dict__["id"], user=user_id).exists()
+             
     
     def get_dislikes_count(self, obj):
         try:
@@ -281,9 +278,17 @@ class CommentDislikeSerilaizer(serializers.ModelSerializer):
 
 class GetAllCommunitySerializer(serializers.ModelSerializer):
     members = serializers.SerializerMethodField()
-
+    image = serializers.SerializerMethodField()
     def get_members(self, instance):
         return instance.membors.count()
+    def get_image(self, instance):
+        if instance.image:
+            # Encode image data to base64 string
+            image_data = instance.image.tobytes()
+            image_data = base64.b64decode(image_data)
+            image = base64.b64encode(image_data).decode('utf-8')
+            return image
+        return None
     class Meta:
         model = Community
-        fields = ["id", "name", "members"]
+        fields = ["id", "name", "members", "image"]
