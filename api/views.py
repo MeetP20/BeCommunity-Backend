@@ -4,14 +4,14 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
-from .serializers import Signup, GetCommunitySerializer, GetCategories, PostSerializer, GetPostSerializer, EditProfileSerializer, GetProfileSerializer, CommentSerializer, PostLikeSerializer, PostDislikeSerializer, GetCommentSerializer, ReplySerializer, CommentLikeSerializer, CommentDislikeSerilaizer, GetAllCommunitySerializer
+from .serializers import Signup, GetCommunitySerializer, GetCategories, PostSerializer, GetPostSerializer, EditProfileSerializer, GetProfileSerializer, CommentSerializer, PostLikeSerializer, PostDislikeSerializer, GetCommentSerializer, ReplySerializer, CommentLikeSerializer, CommentDislikeSerilaizer, GetAllCommunitySerializer, NewMessageSerializer, GetMessage
 from rest_framework.views import APIView
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from .models import User, Community, Category, Post, PostLikes, PostDislike, Comments, CommentLikes, CommentDislike
+from .models import User, Community, Category, Post, PostLikes, PostDislike, Comments, CommentLikes, CommentDislike, Message
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from datetime import date
 from django.forms.models import model_to_dict
@@ -274,13 +274,24 @@ def edit_profile(request):
     token = request.headers.get('Authorization').split()[1]
     decoded_token = RefreshToken(token)
     user_id = decoded_token.payload.get('id')
-    data.update({'user':user_id})
-    serializer = EditProfileSerializer(data=data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    else:
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    user = User.objects.get(id=user_id)
+    try:
+        image = data['image']
+        image_data = base64.b64encode(image.read())
+        user.image = image_data
+    except:
+        pass
+    user.bio = data['bio']
+    user.dob = data['dob']
+    user.save()
+    return Response(status=status.HTTP_201_CREATED)
+    # data.update({'user':user_id})
+    # serializer = EditProfileSerializer(data=data)
+    # if serializer.is_valid():
+    #     serializer.save()
+    #     return Response(serializer.data, status=status.HTTP_201_CREATED)
+    # else:
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['Get'])
 @permission_classes([])
@@ -475,3 +486,27 @@ def getIsOnboard(request):
     user_id = decoded_token.payload.get('id')
     user = User.objects.get(id=user_id)
     return Response(user.is_onboard, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes([])
+def newMessage(request, id):
+    token = request.headers.get('Authorization').split()[1]
+    decoded_token = RefreshToken(token)
+    user_id = decoded_token.payload.get('id')
+    data = request.data
+    message = data['message']
+    community = Community.objects.get(id=id)
+    user = User.objects.get(id = user_id)
+    serializer = NewMessageSerializer(data={"user":user_id, "message":message, "community":id})
+    if serializer.is_valid():
+        serializer.save()
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+@api_view(["GET"])
+@permission_classes([])
+def getMessage(request, id):
+    one_hour_ago = timezone.now() - timedelta(hours=1)
+    message = Message.objects.filter(community=id, date__gte=one_hour_ago).order_by('date')
+    serializer = GetMessage(message, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+

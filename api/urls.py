@@ -28,6 +28,8 @@ urlpatterns = [
     path('make_reply/<str:post_id>/<str:comment_id>/',views.makeReply, name="make_reply"),
     path('get_one_post/<str:post_id>/', views.get_one_post),
     path('get_all_community/', views.getAllCommunities),
-    path('getIsOnboard/', views.getIsOnboard)
+    path('getIsOnboard/', views.getIsOnboard),
+    path('newMessage/<str:id>/', views.newMessage),
+    path('getMessage/<str:id>/', views.getMessage)
 ]
 

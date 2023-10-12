@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.response import Response
-from .models import User, Community, Category, Post, Comments, PostLikes, PostDislike, CommentDislike, CommentLikes
+from .models import User, Community, Category, Post, Comments, PostLikes, PostDislike, CommentDislike, CommentLikes, Message
 from rest_framework import status
 from django.core.files.base import ContentFile
 # from django.contrib.auth.models import User
@@ -292,3 +292,19 @@ class GetAllCommunitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Community
         fields = ["id", "name", "members", "image"]
+
+class NewMessageSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Message
+        fields = ["user", "message", "community", "date"]
+
+
+class GetMessage(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField()
+
+    def get_username(self, instance):
+        return instance.user.username
+    class Meta:
+        model = Message
+        fields = ["user", "message", "community", "date", "username"]

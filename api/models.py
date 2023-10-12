@@ -121,3 +121,11 @@ class ChatRoomMessage(models.Model):
 
     def __str__(self):
         return f'{self.user.username} message to {self.community.name}'
+
+
+class Message(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    message = models.TextField()
+    community = models.ForeignKey(Community, on_delete=models.CASCADE)
+    date = models.DateTimeField(auto_now_add=True)
+
