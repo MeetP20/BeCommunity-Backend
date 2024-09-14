@@ -1,0 +1,63 @@
+name: Backend
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  Build:
+    name: Build backend microservice
+    runs-on: [self-hosted]
+    env:
+      db_user: ${{ secrets.DB_USER }}
+      db_pass: ${{ secrets.DB_PASS }}
+      db_host: ${{ secrets.DB_HOST }}
+      db_name: ${{ secrets.DB_NAME }}
+
+    steps:
+      - name: Clone Repo
+        uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Replace 
+        run: |
+          sed -i 's#REPLACE_DB_USER#$db_user#g' $GITHUB_WORKSPACE/becommunity/settings.py
+          sed -i 's#REPLACE_DB_PASS#$db_pass#g' $GITHUB_WORKSPACE/becommunity/settings.py
+          sed -i 's#REPLACE_DB_HOST#$db_host#g' $GITHUB_WORKSPACE/becommunity/settings.py
+          sed -i 's#REPLACE_DB_NAME#$db_name#g' $GITHUB_WORKSPACE/becommunity/settings.py
+
+      - name: Build Docker image
+        run: |
+          docker build -t backend . 
+
+      - name: ECR Login 
+        run: |
+          export AWS_PROFILE=becommunity
+          aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin aws_account_id.dkr.ecr.ap-south-1.amazonaws.com
+
+
+      - name: Image Push
+        run: |
+          docker tag frontend ${name}/BeCommunity:backend
+          docker push ${name}/BeCommunity:backend
+
+      - name: Cleanup
+        run: |
+          docker rmi backend ${name}/BeCommunity:backend
+
+  Deploy:
+    needs: Build
+    name: Deploy in Kubernetes 
+    runs-on: [self-hosted]
+
+    steps:
+      - name: Clone Repo
+        uses: action/checkout@v4
+        with:
+          ref: master
+
+      - name: Replace
+        run: |
+          export backend_image=${name}/BeCommunity:backend
+          sed -i 's#REPLACE_IMAGE#$backend_image#g' GITHUB_WORKSPACE/
